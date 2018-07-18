@@ -1,0 +1,165 @@
+import React, { Component } from 'react'
+// import HeaderSection from './HeaderSection'
+import VideoScreen from './VideoScreen'
+import Loading from '../Loading'
+import { View, Text, Image, StyleSheet,ScrollView, Button, AsyncStorage } from 'react-native'
+import axios from 'axios'
+import { connect } from 'react-redux'
+import { bindActionCreators } from 'redux'
+import Icon from 'react-native-vector-icons/Ionicons'
+import { List, ListItem } from 'react-native-elements'
+
+
+class HomeScreen extends Component {
+    constructor() {
+        super()
+        this.state = {
+            data: [],
+            loading: false
+        }
+    }
+
+
+    componentDidMount() {
+
+        this.getData()
+
+        console.log('DID MOUNT DI HOME');
+
+    }
+    getData = () => {
+
+        AsyncStorage.getItem('token')
+            .then(res => {
+                this.setState({
+                    loading: true
+                })
+                console.log('INI LOADING DI IMAGE' + this.state.loading);
+
+                if (res !== null) {
+                    console.log('AFTER CEK ASYNC DI IMAGE');
+
+
+                    axios.get(`172.16.13.170:3000/employees`, {
+                            //  axios.get(`http://172.16.13.169:3000/images`, {
+
+                            headers: { token: res },
+                        })
+                        .then((response) => {
+                            console.log('RESPONSE DI IMAGEEEEEEEE' + response.data.data);
+                            this.setState({
+                                data: response.data.data,
+                                loading: false
+                            })
+                        })
+                        .catch((err) => {
+                            console.log('error image' + err);
+                        })
+                } else {
+                    console.log('NO TOKEN NO PARTY');
+
+                }
+            })
+            .catch(err => reject(err));
+
+    }
+
+    static navigationOptions = ({ navigation }) => {
+        const { params } = navigation.state;
+
+        return {
+            title: params ? params.otherParam : 'Big Title',
+            drawerLabel: 'Home',
+            headerLeft:
+                <View style = {
+                    { paddingLeft: 16 }
+                } >
+                <Icon name = "menu"
+            onPress = {
+                () => navigation.openDrawer()
+            }
+                /> 
+            </View > ,
+
+        }
+    };
+
+
+    render() {
+        const { navigation } = this.props;
+        const { params } = this.props;
+        if (this.state.loading) {
+            return ( <View>
+
+                <Text> List of Employee </Text> 
+                <Loading/>
+                </View> 
+            )
+        } 
+        else 
+        {
+           
+            return (<ScrollView style = {
+                    [{ flex: 1 }]
+                } >
+
+                <Text> List of Employee </Text>
+
+                <List> {
+                    this.state.data.map((l, i) => (
+
+
+                        <ListItem
+
+                        key = { i }
+                        title = { l.name }
+                        subtitle = { l.npp }
+                        />
+
+
+                    ))
+                } </List>
+
+                <VideoScreen/>
+
+                <Button onPress = {
+                    () => {
+                        /* 1. Navigate to the Details route with params */
+                        this.props.navigation.navigate('AddEmp', {
+                            onGoBack: () => console.log('Will go back from nextComponent'),
+                        });
+                    }
+                }
+                title = "Add"
+                color = "#841584"
+                accessibilityLabel = "Learn more about this purple button" 
+                />
+
+
+                </ScrollView>       
+            )
+        }
+
+    }
+}
+
+const styles = StyleSheet.create({
+    icon: {
+        width: 24,
+        height: 24,
+    },
+});
+
+
+
+const mapStateToProps = state => ({
+    users: state.data
+})
+
+// const mapDispatchToProps = (dispatch) => bindActionCreators({
+//   getData
+// }, dispatch)
+
+
+
+export default connect(mapStateToProps, null)(HomeScreen);
